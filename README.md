@@ -12,50 +12,83 @@ In order to work with this plugin you first need to go over android-store's [Get
 
 The steps to integrate this billing service are also in android-store's [Selecting Billing Service](https://github.com/soomla/android-store#google-play) but we will also write them here for convenience:
 
+Once you complete the following steps, see the [Google Play IAB](http://know.soom.la/android/store/Store_GooglePlayIAB)
+tutorial in our _Knowledge Base_ for information about in-app-purchase setup, integration with SOOMLA, and how to define
+your in-app purchase items.
 
-1. Add `AndroidStoreGooglePlay.jar` from the `build` folder to your project.
-2. Make the following changes in AndroidManifest.xml:
+1. Add `AndroidStoreGooglePlay.jar` from the folder `billing-services/google-play` to your project.
+
+2. Make the following changes in `AndroidManifest.xml`:
 
   Add the following permission (for Google Play):
 
-  ```xml
-    <uses-permission android:name="com.android.vending.BILLING" />
+  ``` xml
+  <uses-permission android:name="com.android.vending.BILLING" />
   ```
 
-  Add the IabActivity to your `application` element, the plugin will spawn a transparent activity to make purchases. Also, you need to tell us what plugin you're using so add a meta-data tag for that:
+  Add the `IabActivity` to your `application` element, the plugin will spawn a transparent activity to make purchases. Also, you need to tell us what plugin you're using so add a meta-data tag for that:
 
-  ```xml
-    <activity android:name="com.soomla.store.billing.google.GooglePlayIabService$IabActivity"
-      android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen"/>
-    <meta-data android:name="billing.service" android:value="google.GooglePlayIabService" />
+  ``` xml
+  <activity android:name="com.soomla.store.billing.google.GooglePlayIabService$IabActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen"/>
+  <meta-data android:name="billing.service" android:value="google.GooglePlayIabService" />
   ```
 
-3. After you initialize `SoomlaStore`, let the plugin know your public key from the dev console:
+3. After you initialize `SoomlaStore`, let the plugin know your public key from [Google play Developer Console](https://play.google.com/apps/publish/):
 
-  ```Java
-    GooglePlayIabService.getInstance().setPublicKey("[YOUR PUBLIC KEY FROM THE MARKET]");
+  ``` java
+  public class StoreExampleActivity extends Activity {
+      ...
+      protected void onCreate(Bundle savedInstanceState) {
+          ...
+          GooglePlayIabService.getInstance().setPublicKey("[YOUR PUBLIC KEY FROM GOOGLE PLAY]");
+      }
+  }
   ```
 
+4. If you want to allow Android's test purchases, all you need to do is tell that to the plugin:
 
-4. If you want to allow the test purchases, all you need to do is tell that to the plugin:
-
-  ```Java
-    GooglePlayIabService.AllowAndroidTestPurchases = true;
+  ``` java
+  public class StoreExampleActivity extends Activity {
+      ...
+      protected void onCreate(Bundle savedInstanceState) {
+          ...
+          GooglePlayIabService.AllowAndroidTestPurchases = true;
+      }
+  }
   ```
 
-For Google Play, We recommend that you open the IAB Service and keep it open in the background in cases where you have an in-game storefront. This is how you do that:
+5. In case you want to turn on _Fraud Protection_ you need to get clientId, clientSecret and refreshToken as
+explained in [Google Play Purchase Verification](http://know.soom.la/android/store/Store_GooglePlayVerification) in
+our _Knowledge Base_ and use them like this:
 
-  When you open the store, call:  
-
-  ```Java
-    SoomlaStore.getInstance().startIabServiceInBg();
+  ``` java
+      GooglePlayIabService.getInstance().configVerifyPurchases(new HashMap<String, Object>() {{
+          put("clientId", <YOU_CLIENT_ID>);
+          put("clientSecret", <YOUR_CLIENT_SECRET>);
+          put("refreshToken", <YOUR_REFRESH_TOKEN>);
+      }});
   ```
 
-  When the store is closed, call:  
+  >  Optionally you can turn on `verifyOnServerFailure` if you want to get purchases automatically verified in case of network failures during the verification process:
+  >
+  > ``` java
+  > GooglePlayIabService.getInstance().verifyOnServerFailure = true;
+  > ```
 
-  ```Java
-    SoomlaStore.getInstance().stopIabServiceInBg();
-  ```
+####**If you have an in-game storefront**
+
+We recommend that you open the IAB Service and keep it open in the background. This how to do that:
+
+When you open the store, call:  
+``` java
+SoomlaStore.getInstance().startIabServiceInBg();
+```
+
+When the store is closed, call:  
+``` java
+SoomlaStore.getInstance().stopIabServiceInBg();
+```
 
 
 Contribution
