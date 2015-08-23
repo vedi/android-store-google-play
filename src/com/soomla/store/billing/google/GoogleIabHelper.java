@@ -333,7 +333,7 @@ public class GoogleIabHelper extends IabHelper {
          * @param purchase The purchase that was (or was to be) consumed.
          * @param result The result of the consumption operation.
          */
-        public void onConsumeFinished(IabPurchase purchase, IabResult result);
+        void onConsumeFinished(IabPurchase purchase, IabResult result);
     }
 
     /**
@@ -426,8 +426,7 @@ public class GoogleIabHelper extends IabHelper {
 
             act.startIntentSenderForResult(pendingIntent.getIntentSender(),
                     RC_REQUEST, new Intent(),
-                    Integer.valueOf(0), Integer.valueOf(0),
-                    Integer.valueOf(0));
+                    0, 0, 0);
         } catch (SendIntentException e) {
             SoomlaUtils.LogError(TAG, "SendIntentException while launching purchase flow for sku " + sku);
             e.printStackTrace();
@@ -726,7 +725,7 @@ public class GoogleIabHelper extends IabHelper {
             SoomlaUtils.LogError(TAG, "Intent with no response code, assuming OK (known issue)");
             return IabResult.BILLING_RESPONSE_RESULT_OK;
         }
-        else if (o instanceof Integer) return ((Integer)o).intValue();
+        else if (o instanceof Integer) return (Integer) o;
         else if (o instanceof Long) return (int)((Long)o).longValue();
         else {
             SoomlaUtils.LogError(TAG, "Unexpected type for intent response code.");

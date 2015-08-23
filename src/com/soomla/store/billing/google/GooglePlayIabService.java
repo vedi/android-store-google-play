@@ -19,8 +19,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -41,7 +39,7 @@ import com.soomla.store.billing.IabResult;
 import com.soomla.store.billing.IabSkuDetails;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -52,6 +50,7 @@ import java.util.Map;
  */
 public class GooglePlayIabService implements IIabService {
 
+    @SuppressWarnings("unused")
     public static final String VERSION = "1.0.4";
 
     public GooglePlayIabService() {
@@ -220,13 +219,10 @@ public class GooglePlayIabService implements IIabService {
             intent.putExtra(EXTRA_DATA, extraData);
 
             mSavedOnPurchaseListener = purchaseListener;
-            if (SoomlaApp.getAppContext() instanceof Activity) {
-                Activity activity = (Activity) SoomlaApp.getAppContext();
-                activity.startActivity(intent);
-            } else {
+            if (!(SoomlaApp.getAppContext() instanceof Activity)) {
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                SoomlaApp.getAppContext().startActivity(intent);
             }
+            SoomlaApp.getAppContext().startActivity(intent);
 
         } catch(Exception e){
             String msg = "(launchPurchaseFlow) Error purchasing item " + e.getMessage();
@@ -351,8 +347,7 @@ public class GooglePlayIabService implements IIabService {
         /**
          * Celled to notify that a verify purchases operation completed.
          */
-        public void finished();
-
+        void finished();
     }
 
     /**
@@ -489,7 +484,7 @@ public class GooglePlayIabService implements IIabService {
 
             if (result.getResponse() == IabResult.BILLING_RESPONSE_RESULT_OK) {
                 if (shouldVerifyPurchases()) {
-                    GooglePlayIabService.getInstance().verifyPurchases(Arrays.asList(purchase), new VerifyPurchasesFinishedListener() {
+                    GooglePlayIabService.getInstance().verifyPurchases(Collections.singletonList(purchase), new VerifyPurchasesFinishedListener() {
                         @Override
                         public void finished() {
                             purchaseFinishedSuccessfully(purchase);
