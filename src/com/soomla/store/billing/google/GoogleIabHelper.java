@@ -213,7 +213,7 @@ public class GoogleIabHelper extends IabHelper {
                 return true;
             }
 
-            IabPurchase purchase = null;
+            IabPurchase purchase;
             try {
                 purchase = new IabPurchase(mPurchasingItemType, purchaseData, dataSignature);
                 String sku = purchase.getSku();
@@ -347,7 +347,7 @@ public class GoogleIabHelper extends IabHelper {
          * @param results The results of each consumption operation, corresponding to each
          *     sku.
          */
-        public void onConsumeMultiFinished(List<IabPurchase> purchases, List<IabResult> results);
+        void onConsumeMultiFinished(List<IabPurchase> purchases, List<IabResult> results);
     }
 
 
@@ -360,17 +360,14 @@ public class GoogleIabHelper extends IabHelper {
     protected void restorePurchasesAsyncInner() {
         (new Thread(new Runnable() {
             public void run() {
-                IabInventory inv = null;
                 try {
-                    inv = restorePurchases();
-                }
-                catch (IabException ex) {
+                    IabInventory inv = restorePurchases();
+                    restorePurchasesSuccess(inv);
+                } catch (IabException ex) {
                     IabResult result = ex.getResult();
                     restorePurchasesFailed(result);
-                    return;
                 }
 
-                restorePurchasesSuccess(inv);
             }
         })).start();
     }
@@ -382,17 +379,14 @@ public class GoogleIabHelper extends IabHelper {
     protected void fetchSkusDetailsAsyncInner(final List<String> skus) {
         (new Thread(new Runnable() {
             public void run() {
-                IabInventory inv = null;
                 try {
-                    inv = fetchSkusDetails(skus);
-                }
-                catch (IabException ex) {
+                    IabInventory inv = fetchSkusDetails(skus);
+                    fetchSkusDetailsSuccess(inv);
+                } catch (IabException ex) {
                     IabResult result = ex.getResult();
                     fetchSkusDetailsFailed(result);
-                    return;
                 }
 
-                fetchSkusDetailsSuccess(inv);
             }
         })).start();
     }
@@ -707,7 +701,7 @@ public class GoogleIabHelper extends IabHelper {
             SoomlaUtils.LogDebug(TAG, "Bundle with null response code, assuming OK (known issue)");
             return IabResult.BILLING_RESPONSE_RESULT_OK;
         }
-        else if (o instanceof Integer) return ((Integer)o).intValue();
+        else if (o instanceof Integer) return (Integer) o;
         else if (o instanceof Long) return (int)((Long)o).longValue();
         else {
             SoomlaUtils.LogError(TAG, "Unexpected type for bundle response code.");
