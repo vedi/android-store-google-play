@@ -319,14 +319,16 @@ public class GooglePlayIabService implements IIabService {
                 Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
                 for (IabPurchase purchase : purchases) {
+                    // verify `purchased` only
+                    if (purchase.getPurchaseState() == 0) {
+                        SoomlaGpVerification sv = new SoomlaGpVerification(purchase,
+                                KeyValueStorage.getValue(VERIFY_CLIENT_ID_KEY),
+                                KeyValueStorage.getValue(VERIFY_CLIENT_SECRET_KEY),
+                                KeyValueStorage.getValue(VERIFY_REFRESH_TOKEN_KEY),
+                                Boolean.parseBoolean(KeyValueStorage.getValue(VERIFY_ON_SERVER_FAILURE)));
 
-                    SoomlaGpVerification sv = new SoomlaGpVerification(purchase,
-                            KeyValueStorage.getValue(VERIFY_CLIENT_ID_KEY),
-                            KeyValueStorage.getValue(VERIFY_CLIENT_SECRET_KEY),
-                            KeyValueStorage.getValue(VERIFY_REFRESH_TOKEN_KEY),
-                            Boolean.parseBoolean(KeyValueStorage.getValue(VERIFY_ON_SERVER_FAILURE)));
-
-                    sv.verifyPurchase();
+                        sv.verifyPurchase();
+                    }
                 }
 
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
@@ -353,7 +355,7 @@ public class GooglePlayIabService implements IIabService {
     /**
      * Handle Restore Purchases processes
      */
-    private class RestorePurchasesFinishedListener implements IabHelper.RestorePurchasessFinishedListener {
+    private class RestorePurchasesFinishedListener implements IabHelper.RestorePurchasesFinishedListener {
 
 
         private IabCallbacks.OnRestorePurchasesListener mRestorePurchasesListener;
@@ -363,7 +365,7 @@ public class GooglePlayIabService implements IIabService {
         }
 
         @Override
-        public void onRestorePurchasessFinished(IabResult result, IabInventory inventory) {
+        public void onRestorePurchasesFinished(IabResult result, IabInventory inventory) {
             SoomlaUtils.LogDebug(TAG, "Restore Purchases succeeded");
             if (result.getResponse() == IabResult.BILLING_RESPONSE_RESULT_OK && mRestorePurchasesListener != null) {
                 // fetching owned items
@@ -378,11 +380,11 @@ public class GooglePlayIabService implements IIabService {
                     verifyPurchases(purchases, new VerifyPurchasesFinishedListener() {
                         @Override
                         public void finished() {
-                            restorePurchasessFinished(purchases);
+                            restorePurchasesFinished(purchases);
                         }
                     });
                 } else {
-                    restorePurchasessFinished(purchases);
+                    restorePurchasesFinished(purchases);
                 }
 
             } else {
@@ -393,7 +395,7 @@ public class GooglePlayIabService implements IIabService {
 
         }
 
-        private void restorePurchasessFinished(List<IabPurchase> purchases) {
+        private void restorePurchasesFinished(List<IabPurchase> purchases) {
             mRestorePurchasesListener.success(purchases);
             stopIabHelper(null);
         }
