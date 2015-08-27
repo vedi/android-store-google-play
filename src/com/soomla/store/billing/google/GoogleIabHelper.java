@@ -34,12 +34,18 @@ import com.android.vending.billing.IInAppBillingService;
 import com.soomla.SoomlaApp;
 import com.soomla.SoomlaConfig;
 import com.soomla.SoomlaUtils;
+import com.soomla.store.StoreInventory;
 import com.soomla.store.billing.IabException;
 import com.soomla.store.billing.IabHelper;
 import com.soomla.store.billing.IabInventory;
 import com.soomla.store.billing.IabPurchase;
 import com.soomla.store.billing.IabResult;
 import com.soomla.store.billing.IabSkuDetails;
+import com.soomla.store.data.StoreInfo;
+import com.soomla.store.domain.virtualGoods.LifetimeVG;
+import com.soomla.store.domain.virtualGoods.VirtualGood;
+import com.soomla.store.exceptions.VirtualItemNotFoundException;
+import com.soomla.store.purchaseTypes.PurchaseWithMarket;
 import org.json.JSONException;
 
 import java.util.ArrayList;
@@ -362,6 +368,7 @@ public class GoogleIabHelper extends IabHelper {
             public void run() {
                 try {
                     IabInventory inv = restorePurchases();
+                    syncWithStoredPurchases(inv);
                     restorePurchasesSuccess(inv);
                 } catch (IabException ex) {
                     IabResult result = ex.getResult();
@@ -443,7 +450,6 @@ public class GoogleIabHelper extends IabHelper {
 
 
     }
-
 
     /** Private functions **/
 
@@ -726,6 +732,38 @@ public class GoogleIabHelper extends IabHelper {
             SoomlaUtils.LogError(TAG, o.getClass().getName());
             throw new RuntimeException("Unexpected type for intent response code: " + o.getClass().getName());
         }
+    }
+
+    private void syncWithStoredPurchases(IabInventory inv) {
+
+        List<String> allOwnedSkus = inv.getAllOwnedSkus();
+
+        // Getting List of Lifetime
+        List<VirtualGood> goods = StoreInfo.getGoods();
+        for (VirtualGood good : goods) {
+            if (good instanceof LifetimeVG) {
+                LifetimeVG lifetimeVG = (LifetimeVG) good;
+                if (lifetimeVG.getPurchaseType() instanceof PurchaseWithMarket) {
+                    // at this point we have LifetimeVG PurchaseWithMarket only
+                    PurchaseWithMarket purchaseWithMarket = (PurchaseWithMarket) lifetimeVG.getPurchaseType();
+                    try {
+                        int itemBalance = StoreInventory.getVirtualItemBalance(lifetimeVG.getItemId());
+                        // user purchased this item
+                        if (itemBalance > 0) {
+                            // this item has not came from Google
+                            if (!allOwnedSkus.contains(purchaseWithMarket.getMarketItem().getProductId())) {
+                                // Adding it as refunded
+                                inv.addPurchase(new IabPurchase(ITEM_TYPE_INAPP, purchaseWithMarket.getMarketItem().getProductId(),
+                                        "", "", 2));
+                            }
+                        }
+                    } catch (VirtualItemNotFoundException e) {
+                        SoomlaUtils.LogError(TAG, e.getLocalizedMessage());
+                    }
+                }
+            }
+        }
+
     }
 
     /** Private Members **/
