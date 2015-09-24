@@ -51,7 +51,7 @@ import java.util.Map;
 public class GooglePlayIabService implements IIabService {
 
     @SuppressWarnings("unused")
-    public static final String VERSION = "1.0.4";
+    public static final String VERSION = "1.0.5";
 
     public GooglePlayIabService() {
         configVerifyPurchases(null);    // we reset it every run
@@ -188,6 +188,11 @@ public class GooglePlayIabService implements IIabService {
         }
     }
 
+    @Override
+    public boolean shouldVerifyPurchases() {
+        return isVerifyPurchasesEnabled();
+    }
+
     public void setAccessToken(String token) {
         KeyValueStorage.setValue(VERIFY_ACCESS_TOKEN_KEY, token);
     }
@@ -303,7 +308,7 @@ public class GooglePlayIabService implements IIabService {
         }
     }
 
-    private static boolean shouldVerifyPurchases() {
+    private static boolean isVerifyPurchasesEnabled() {
         return !TextUtils.isEmpty(KeyValueStorage.getValue(VERIFY_PURCHASES_KEY));
     }
 
@@ -376,7 +381,7 @@ public class GooglePlayIabService implements IIabService {
                     purchases.add(purchase);
                 }
 
-                if (shouldVerifyPurchases()) {
+                if (isVerifyPurchasesEnabled()) {
                     verifyPurchases(purchases, new VerifyPurchasesFinishedListener() {
                         @Override
                         public void finished() {
@@ -485,7 +490,7 @@ public class GooglePlayIabService implements IIabService {
             GooglePlayIabService.getInstance().mWaitingServiceResponse = false;
 
             if (result.getResponse() == IabResult.BILLING_RESPONSE_RESULT_OK) {
-                if (shouldVerifyPurchases()) {
+                if (isVerifyPurchasesEnabled()) {
                     GooglePlayIabService.getInstance().verifyPurchases(Collections.singletonList(purchase), new VerifyPurchasesFinishedListener() {
                         @Override
                         public void finished() {
